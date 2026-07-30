@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Processing Studio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Image Processing Studio</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="file">
+
+        <select name="operation">
+            <option value="grayscale">Grayscale</option>
+            <option value="enhance">Enhance</option>
+            <option value="background">Remove Background</option>
+            <option value="erode">Morphology - Erosion</option>
+            <option value="dilate">Morphology - Dilation</option>
+            <option value="open">Morphology - Opening</option>
+            <option value="close">Morphology - Closing</option>
+            <option value="binary">Threshold - Binary</option>
+            <option value="otsu">Threshold - Otsu</option>
+            <option value="adaptive">Threshold - Adaptive</option>
+        </select>
+
+        <button type="submit">Process</button>
+    </form>
+
+    {% if processed_img %}
+        <h3>Result:</h3>
+        <img src="{{ processed_img }}" width="400">
+    {% endif %}
+
+</body>
+</html>
