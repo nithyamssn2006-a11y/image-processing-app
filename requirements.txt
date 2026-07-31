@@ -1,4 +1,7 @@
 Flask
 opencv-python
 numpy
+Pillow
+rembg
+onnxruntime
 gunicorn

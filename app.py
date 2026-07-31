@@ -104,6 +104,8 @@ def index():
                 result = apply_morphology(img, operation)
             elif operation in ["binary", "otsu", "adaptive"]:
                 result = apply_threshold(img, operation)
+            elif operation == "blur":
+                result = cv2.GaussianBlur(image, (15, 15), 0)
             else:
                 result = img
 
