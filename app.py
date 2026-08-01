@@ -75,6 +75,32 @@ def apply_threshold(img, method):
     return result
 
 
+def apply_blur(img):
+    return cv2.GaussianBlur(img, (15, 15), 0)
+
+
+def apply_edge_detection(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 100, 200)
+    return edges
+
+
+def apply_sharpen(img):
+    kernel = np.array([[0, -1, 0],
+                        [-1, 5, -1],
+                        [0, -1, 0]])
+    return cv2.filter2D(img, -1, kernel)
+
+
+def apply_sepia(img):
+    kernel = np.array([[0.272, 0.534, 0.131],
+                        [0.349, 0.686, 0.168],
+                        [0.393, 0.769, 0.189]])
+    sepia = cv2.transform(img, kernel)
+    sepia = np.clip(sepia, 0, 255).astype(np.uint8)
+    return sepia
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     processed_img = None
@@ -105,7 +131,13 @@ def index():
             elif operation in ["binary", "otsu", "adaptive"]:
                 result = apply_threshold(img, operation)
             elif operation == "blur":
-                result = cv2.GaussianBlur(image, (15, 15), 0)
+                result = apply_blur(img)
+            elif operation == "edge":
+                result = apply_edge_detection(img)
+            elif operation == "sharpen":
+                result = apply_sharpen(img)
+            elif operation == "sepia":
+                result = apply_sepia(img)
             else:
                 result = img
 

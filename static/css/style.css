@@ -61,6 +61,15 @@ select {
     background: rgba(255, 255, 255, 0.08);
     color: #eee;
     font-size: 14px;
+    font-weight: 700;
+}
+
+select option {
+    background-color: #2d2560;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 8px;
 }
 
 button {
