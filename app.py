@@ -1,78 +1,14 @@
 import os
 import cv2
 import numpy as np
-import urllib.request
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "static/uploads"
 PROCESSED_FOLDER = "static/processed"
-MODEL_FOLDER = "models"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
-os.makedirs(MODEL_FOLDER, exist_ok=True)
-
-# ---------- Colorization model files ----------
-PROTOTXT_PATH = os.path.join(MODEL_FOLDER, "colorization_deploy_v2.prototxt")
-POINTS_PATH = os.path.join(MODEL_FOLDER, "pts_in_hull.npy")
-MODEL_PATH = os.path.join(MODEL_FOLDER, "colorization_release_v2.caffemodel")
-
-PROTOTXT_URL = "https://raw.githubusercontent.com/richzhang/colorization/caffe/colorization/models/colorization_deploy_v2.prototxt"
-POINTS_URL = "https://raw.githubusercontent.com/richzhang/colorization/caffe/colorization/resources/pts_in_hull.npy"
-MODEL_URL = "http://eecs.berkeley.edu/~rich.zhang/projects/2016_colorization/files/demo_v2/colorization_release_v2.caffemodel"
-
-_colorizer_net = None
-
-
-def download_if_missing(url, path):
-    if not os.path.exists(path):
-        print("Downloading:", path)
-        urllib.request.urlretrieve(url, path)
-        print("Downloaded:", path)
-
-
-def get_colorizer():
-    global _colorizer_net
-    if _colorizer_net is None:
-        download_if_missing(PROTOTXT_URL, PROTOTXT_PATH)
-        download_if_missing(POINTS_URL, POINTS_PATH)
-        download_if_missing(MODEL_URL, MODEL_PATH)
-
-        net = cv2.dnn.readNetFromCaffe(PROTOTXT_PATH, MODEL_PATH)
-        pts = np.load(POINTS_PATH)
-
-        class8 = net.getLayerId("class8_ab")
-        conv8 = net.getLayerId("conv8_313_rh")
-        pts = pts.transpose().reshape(2, 313, 1, 1)
-        net.getLayer(class8).blobs = [pts.astype(np.float32)]
-        net.getLayer(conv8).blobs = [np.full([1, 313], 2.606, dtype="float32")]
-
-        _colorizer_net = net
-    return _colorizer_net
-
-
-def apply_colorization(img):
-    net = get_colorizer()
-
-    scaled = img.astype("float32") / 255.0
-    lab = cv2.cvtColor(scaled, cv2.COLOR_BGR2LAB)
-
-    resized = cv2.resize(lab, (224, 224))
-    L = cv2.split(resized)[0]
-    L -= 50
-
-    net.setInput(cv2.dnn.blobFromImage(L))
-    ab = net.forward()[0, :, :, :].transpose((1, 2, 0))
-    ab = cv2.resize(ab, (img.shape[1], img.shape[0]))
-
-    L_orig = cv2.split(lab)[0]
-    colorized = np.concatenate((L_orig[:, :, np.newaxis], ab), axis=2)
-    colorized = cv2.cvtColor(colorized, cv2.COLOR_LAB2BGR)
-    colorized = np.clip(colorized, 0, 1)
-    colorized = (255 * colorized).astype("uint8")
-
-    return colorized
 
 
 def apply_grayscale(img):
@@ -222,8 +158,6 @@ def index():
                 result = apply_sharpen(img)
             elif operation == "sepia":
                 result = apply_sepia(img)
-            elif operation == "colorize":
-                result = apply_colorization(img)
             else:
                 result = img
 
