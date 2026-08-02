@@ -21,20 +21,29 @@ def apply_enhance(img):
 
 
 def apply_background_removal(img):
-    mask = np.zeros(img.shape[:2], np.uint8)
+    # Downscale before processing to keep memory usage low
+    original_h, original_w = img.shape[:2]
+    max_dim = 400
+    scale = min(max_dim / original_w, max_dim / original_h, 1.0)
+    small = cv2.resize(img, (int(original_w * scale), int(original_h * scale)))
+
+    mask = np.zeros(small.shape[:2], np.uint8)
     bgd_model = np.zeros((1, 65), np.float64)
     fgd_model = np.zeros((1, 65), np.float64)
 
-    h, w = img.shape[:2]
+    h, w = small.shape[:2]
     rect = (int(w * 0.05), int(h * 0.05), int(w * 0.9), int(h * 0.9))
 
-    cv2.grabCut(img, mask, rect, bgd_model, fgd_model, 5, cv2.GC_INIT_WITH_RECT)
+    cv2.grabCut(small, mask, rect, bgd_model, fgd_model, 3, cv2.GC_INIT_WITH_RECT)
 
     mask2 = np.where((mask == 2) | (mask == 0), 0, 1).astype("uint8")
-    result = img * mask2[:, :, np.newaxis]
 
+    # Upscale mask back to original image size
+    mask2_full = cv2.resize(mask2, (original_w, original_h), interpolation=cv2.INTER_NEAREST)
+
+    result = img * mask2_full[:, :, np.newaxis]
     white_bg = np.ones_like(img, dtype=np.uint8) * 255
-    final = np.where(mask2[:, :, np.newaxis] == 1, result, white_bg)
+    final = np.where(mask2_full[:, :, np.newaxis] == 1, result, white_bg)
 
     return final
 
